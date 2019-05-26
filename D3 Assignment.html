@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>D3 Assignment</title>
+    </head>
+    
+    <header><h1 align="center">D3 Trading Network</h1></header>
+    <body align="center">This network shows the amount traded by each node in proportion to the radius, and show the amount traded within each other in proportion to the width of the edges</body>
+    <body>
+        <div style="text-align:center;"><svg></svg></div>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+            <script>
+                //svg canvas
+                var svgCanvas = d3.select("svg")
+                        .attr("width", 1000)
+                        .attr("height", 620)
+                        .attr("class", "svgCanvas")
+                        .style("border", "1px solid");
+                
+                d3.json("data.json",function(data){
+                    for (var i=0; i<data.nodes.length ;i++){
+                        var id = data.nodes[i]['id']
+                        var weight=0
+                        var neigh = 0
+                        for (var j=0;j<data.links.length;j++){
+                            var n1= data.links[j]['node01']
+                            var n2= data.links[j]['node02']
+                            if (id==n1){
+                                weight+=data.links[j]['amount']
+                                neigh+=1
+                                data.links[j]['x1']=data.nodes[i]['x']
+                                data.links[j]['y1']=data.nodes[i]['y']
+                            }
+                            else if (id==n2){
+                                weight+=data.links[j]['amount']
+                                neigh+=1
+                                data.links[j]['x2']=data.nodes[i]['x']
+                                data.links[j]['y2']=data.nodes[i]['y']
+                            }
+                        }
+                        data.nodes[i]['radius']=weight
+                        data.nodes[i]['neighnum']=neigh
+                        }
+                    console.log(data)
+                    
+                    var link = svgCanvas
+                                .selectAll("line")
+                                .data(data.links)
+                                .enter().append("line") 
+                                .attr("x1", function(d) { return d.x1; })
+                                .attr("y1", function(d) { return d.y1; })
+                                .attr("x2", function(d) { return d.x2; })
+                                .attr("y2", function(d) { return d.y2; })
+                                .style("stroke-width", function(d) { return d.amount/220; })
+                                .style('stroke',"grey");
+                    
+                    var node = svgCanvas
+                                .selectAll("circle")
+                                .data(data.nodes)
+                                .enter().append("circle")
+                                .attr("r", function(d) { return d.radius/100; })
+                                .attr("cx",function(d) { return d.x; })
+                                .attr("cy",function(d) { return d.y; })
+                                .style("fill", "#87CEEB")
+                                .style('stroke','black');
+
+                    
+                    node.on("mouseover", function (d) {
+				    link.attr('opacity', function(l) {
+				    if ((d.x === l.x1 && d.y === l.y1)||(d.x === l.x2 && d.y === l.y2))
+				    return 1;
+				  else
+				    return 0.002;});
+                    svgCanvas.selectAll("circle")
+                    .attr("opacity", 0.05);
+                    d3.select(this).attr("opacity", 1)
+                        .append('svg:title')
+                        .text(function(d) {
+                                    return (`Node ID ${d.id}\nThe total amount traded: ${d.radius}\n The total neighbours: ${d.neighnum}`)});
+
+                    })
+
+                    node.on("mouseout", function (d) {
+                    svgCanvas.selectAll('circle').attr('opacity',1)
+                    svgCanvas.selectAll('line').attr('opacity',1)
+				    link.style("stroke-width", function(d) { return d.amount/260; });
+				
+				});
+                    
+                
+                                                 });
+                
+               
+
+                
+
+            </script>
+    </body>
+</html>
